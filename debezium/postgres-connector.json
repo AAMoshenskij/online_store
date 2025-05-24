@@ -1,0 +1,18 @@
+{
+    "name": "postgres-connector",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+        "database.hostname": "postgres",
+        "database.port": "5432",
+        "database.user": "admin",
+        "database.password": "admin",
+        "database.dbname": "online_store",
+        "database.server.name": "postgres",
+        "table.include.list": "public.users,public.sellers,public.products,public.product_ratings",
+        "plugin.name": "pgoutput",
+        "tombstones.on.delete": "false",
+        "database.history.kafka.bootstrap.servers": "kafka:29092",
+        "database.history.kafka.topic": "schema-changes.postgres"
+    }
+} 
