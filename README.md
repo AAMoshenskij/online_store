@@ -128,8 +128,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 - [SQLAlchemy Documentation](https://www.sqlalchemy.org/)
 - [Pydantic Documentation](https://docs.pydantic.dev/latest/)
 
-## Contact
 
-For questions or inquiries, please contact [Amin Zamani](mailto:aminzamani.work@gmail.com).
 
 ---
