@@ -71,7 +71,7 @@ actual values. Here's an example:
 3. Replace the placeholder values with your actual configuration details.
 4. Save the file.
 
-Запуск контейнеров:
+Запуск контейнеров!!!:
 1) Создаем сеть, например так:
 docker network create your_network
 2) Запускаем ELASTICSEARCH так:
