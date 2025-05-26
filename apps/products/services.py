@@ -10,6 +10,7 @@ from apps.products.models import Product, ProductOption, ProductOptionItem, Prod
 from config import settings
 from config.database import DatabaseManager
 from sqlalchemy.orm import Session
+from apps.accounts.models import User
 
 
 class ProductService:
@@ -241,25 +242,46 @@ class ProductService:
         return product
 
     @classmethod
-    def update_product(cls, product_id, **kwargs):
+    def update_product(cls, product_id, current_user, **kwargs):
+        """Update product with seller permission check"""
+        product = Product.get_or_404(product_id)
+        
+        # Проверяем, является ли пользователь продавцом и владельцем товара
+        if current_user.role != 'admin':
+            seller = Seller.filter(Seller.user_id == current_user.id).first()
+            if not seller or product_id not in seller.product_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You don't have permission to update this product"
+                )
 
-        # --- init data ---
-        # TODO `updated_at` is autoupdate dont need to code
+        # Обновляем данные
         kwargs['updated_at'] = DateTime.now()
-
-        # --- update product ---
         Product.update(product_id, **kwargs)
         return cls.retrieve_product(product_id)
 
     @classmethod
-    def update_variant(cls, variant_id, **kwargs):
-        # check variant exist
-        ProductVariant.get_or_404(variant_id)
+    def update_variant(cls, variant_id: int, current_user: User, **kwargs):
+        variant = ProductVariant.get_or_404(variant_id)
+        product_id = variant.product_id
+        
+        if current_user.role == 'admin':
+            pass  # Админ имеет полный доступ
+        elif current_user.role == 'seller':
+            seller = Seller.filter(Seller.user_id == current_user.id).first()
+            
+            if not seller:
+                raise HTTPException(403, "Seller profile not found")
+                
+            # ВАЖНО: Проверяем ДО изменений
+            if not seller.product_ids or product_id not in seller.product_ids:
+                raise HTTPException(403, "You don't own this product")
+        else:
+            raise HTTPException(403, "Admin or seller rights required")
 
-        # TODO `updated_at` is autoupdate dont need to code
+        # Обновляем вариант
         kwargs['updated_at'] = DateTime.now()
         ProductVariant.update(variant_id, **kwargs)
-
         return cls.retrieve_variant(variant_id)
 
     @classmethod
@@ -419,9 +441,41 @@ class ProductService:
                 ProductMedia.delete(ProductMedia.get_or_404(media.id))
         return None
 
-    @staticmethod
-    def delete_product(product_id):
-        Product.delete(Product.get_or_404(product_id))
+    @classmethod
+    def delete_product(cls, product_id: int, current_user: User):
+        """Delete product with seller permission check"""
+        product = Product.get_or_404(product_id)
+        
+        # Админы могут всё
+        if current_user.role == 'admin':
+            pass
+        # Проверяем права продавца
+        elif current_user.role == 'seller':
+            seller = Seller.filter(Seller.user_id == current_user.id).first()
+            if not seller:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Seller profile not found"
+                )
+            
+            # Проверяем права ДО любых изменений
+            if not seller.product_ids or product_id not in seller.product_ids:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You don't own this product"
+                )
+            
+            # Если права подтверждены - удаляем из списка продавца
+            seller.product_ids = [pid for pid in seller.product_ids if pid != product_id]
+            Seller.update(seller.id, product_ids=seller.product_ids)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Admin or seller rights required"
+            )
+
+        # Удаляем сам продукт (если проверки прав пройдены)
+        Product.delete(product)
 
     @classmethod
     def delete_media_file(cls, media_id: int):
@@ -439,6 +493,7 @@ class ProductService:
 # Добавляем в apps/products/services.py
 
 from sqlalchemy import or_, and_, func
+from fastapi import HTTPException, status
 
 @classmethod
 def list_products(cls, page: int = 1, limit: int = 12, filters: dict = None):
@@ -598,3 +653,24 @@ def _get_main_image_url(cls, product_id: int, request: Request):
     if media:
         return str(request.base_url) + f"media/products/{product_id}/{media.src}"
     return None
+
+from apps.accounts.models import Seller
+
+@classmethod
+def update_product(cls, product_id, current_user, **kwargs):
+    """Update product with seller permission check"""
+    product = Product.get_or_404(product_id)
+    
+    # Проверяем, является ли пользователь продавцом и владельцем товара
+    if current_user.role != 'admin':
+        seller = Seller.filter(Seller.user_id == current_user.id).first()
+        if not seller or product_id not in seller.product_ids:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to update this product"
+            )
+
+    # Обновляем данные
+    kwargs['updated_at'] = DateTime.now()
+    Product.update(product_id, **kwargs)
+    return cls.retrieve_product(product_id)

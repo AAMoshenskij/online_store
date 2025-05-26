@@ -38,6 +38,8 @@ from apps.core.services.media import MediaService
 from apps.products import schemas
 from apps.products.services import ProductService
 from apps.accounts.models import User
+from fastapi import FastAPI, HTTPException, status
+import logging
 
 router = APIRouter(
     #dependencies=[Depends(Permission.is_authenticated)],  # Все endpoints требуют auth
@@ -107,29 +109,37 @@ async def list_produces(request: Request):
 
 
 @router.put(
-    '/{product_id}',
+    '/variants/{variant_id}',
     status_code=status.HTTP_200_OK,
-    response_model=schemas.UpdateProductOut,
-    summary='Updates a product',
-    description='Updates a product.',
-    tags=["Product"],
-    dependencies=[Depends(Permission.is_admin)])
-async def update_product(request: Request, product_id: int, payload: schemas.UpdateProductIn):
-    # TODO permission: only admin
-    # TODO update a product with media
-
-    updated_product_data = {}
-    payload = payload.model_dump()
-
-    for key, value in payload.items():
+    response_model=schemas.UpdateVariantOut,
+    summary='Updates an existing product variant',
+    description='Modify an existing Product Variant.',
+    tags=['Product Variant'])
+async def update_variant(
+    variant_id: int,
+    payload: schemas.UpdateVariantIn,
+    current_user: User = Depends(Permission.is_seller)
+):
+    update_data = {}
+    for key, value in payload.model_dump().items():
         if value is not None:
-            updated_product_data[key] = value
-
+            update_data[key] = value
+    
     try:
-        updated_product = ProductService(request).update_product(product_id, **updated_product_data)
-        return {'product': updated_product}
+        updated_variant = ProductService.update_variant(
+            variant_id=variant_id,
+            current_user=current_user,
+            **update_data
+        )
+        return {'variant': updated_variant}
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        #logger.error(f"Error updating variant {variant_id}: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to update product variant"
+        )
 
 
 @router.delete(
@@ -139,8 +149,20 @@ async def update_product(request: Request, product_id: int, payload: schemas.Upd
     description='Deletes an existing product.',
     tags=['Product'],
     dependencies=[Depends(Permission.is_admin)])
-async def delete_product(product_id: int):
-    ProductService.delete_product(product_id)
+async def delete_product(
+    product_id: int,
+    current_user: User = Depends(Permission.is_seller)
+):
+    try:
+        ProductService.delete_product(product_id, current_user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        #logger.error(f"Error deleting product: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to delete product"
+        )
 
 
 
