@@ -1,5 +1,17 @@
 # FastAPI Shop
 
+Запуск:
+1) Создаем сеть, например так
+docker network create your_network
+2) Запускаем ELASTICSEARCH
+docker run -d --name elasticsearch --net your_network -p 9200:9200 -e "discovery.type=single-node" elasticsearch:8.8.1
+3) Создаем докер контейнер примерно так
+docker run --name fastapi-shop -p 5432:5432 -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=fastapi-shop-db -d postgres:13.3
+4) Подключаем контейнер к сети
+docker network connect your_network [имя_контейнера]
+
+Далее по инструкции ниже
+
 ## Overview
 
 FastAPI Shop is your go-to starting point for building a modern, efficient, and highly customizable online shop. This
@@ -39,14 +51,12 @@ enhancing your venture with a feature-rich online shopping experience.
 
 1. **Clone the repository:**
 
-    ```shell
-    git clone https://github.com/zamaniamin/fastapi-shop.git
-    ```
+    
 
 2. **Navigate to the project directory:**
 
     ```shell
-    cd fastapi-shop
+    cd online_store
     ```
 
 3. **Create and activate a virtual environment (recommended):**
