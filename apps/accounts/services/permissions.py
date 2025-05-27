@@ -23,4 +23,11 @@ class Permission:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You need to be a seller to perform this action.")
         return current_user
-            
+
+    @classmethod    
+    async def is_authenticated(cls, current_user: User = Depends(AccountService.current_user)):
+        if current_user.role != 'admin' and current_user.role != 'seller' and current_user.role != 'user':
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have permission to access this resource.")
+        return current_user

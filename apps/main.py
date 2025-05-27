@@ -8,6 +8,7 @@ from config.settings import MEDIA_DIR
 #from config.elasticsearch import es
 
 from apps.search.routers import router as search_router
+from apps.orders.routers import router as orders_router
 
 
 # -------------------
@@ -46,6 +47,7 @@ app.mount("/media", StaticFiles(directory=MEDIA_DIR), name="media")
 
 RouterManager(app).import_routers()
 app.include_router(search_router)
+app.include_router(orders_router)
 
 @app.on_event("startup")
 async def startup_event():
