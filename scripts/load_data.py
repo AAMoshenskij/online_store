@@ -10,7 +10,7 @@ DB_PARAMS = {
     'dbname': 'online_store',
     'user': 'admin',
     'password': 'admin',
-    'host': 'localhost',  # Using localhost since we're running inside the container
+    'host': 'postgres',  # Using localhost since we're running inside the container
     'port': '5432'
 }
 
