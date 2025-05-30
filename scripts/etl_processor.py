@@ -39,11 +39,11 @@ logger.info(f"Environment variables: KAFKA_BOOTSTRAP_SERVERS={os.getenv('KAFKA_B
 
 # ClickHouse configuration
 CLICKHOUSE_CONFIG = {
-    'host': 'clickhouse',
-    'port': 9000,
-    'user': 'default',
-    'password': 'default',
-    'database': 'online_store'
+    'host': os.getenv("CLICKHOUSE_HOST", 'clickhouse'),
+    'port': int(os.getenv("CLICKHOUSE_PORT", 9000)),
+    'user': os.getenv("CLICKHOUSE_USER", 'default'),
+    'password': os.getenv("CLICKHOUSE_PASSWORD", ''),
+    'database': os.getenv("CLICKHOUSE_DB", 'online_store')
 }
 
 # Table mappings (PostgreSQL -> ClickHouse)

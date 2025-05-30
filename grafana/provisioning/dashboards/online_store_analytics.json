@@ -105,7 +105,7 @@
               "uid": "clickhouse"
             },
             "queryType": "table",
-            "rawSql": "SELECT toStartOfDay(o.order_date) as time, sum(oi.quantity * p.external_price) as daily_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY time ORDER BY time",
+            "rawSql": "SELECT toStartOfDay(o.order_date) as time, sum(oi.quantity * p.external_price) as daily_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE $__timeFilter(o.order_date) GROUP BY time ORDER BY time",
             "refId": "A"
           }
         ],
@@ -208,9 +208,8 @@
               }
             },
             "pluginVersion": "4.9.0",
-            "query": "SELECT p.main_category, sum(oi.quantity * p.external_price) as category_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY p.main_category",
             "queryType": "table",
-            "rawSql": "SELECT p.main_category, sum(oi.quantity * p.external_price) as category_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY p.main_category",
+            "rawSql": "SELECT p.main_category, sum(oi.quantity * p.external_price) as category_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE $__timeFilter(o.order_date) GROUP BY p.main_category",
             "refId": "A"
           }
         ],
@@ -291,9 +290,8 @@
               }
             },
             "pluginVersion": "4.9.0",
-            "query": "SELECT count(DISTINCT o.user_id) as total_customers FROM online_store.orders o WHERE o.order_date >= now() - INTERVAL 1 MONTH",
             "queryType": "table",
-            "rawSql": "SELECT count(DISTINCT o.user_id) as total_customers FROM online_store.orders o WHERE o.order_date >= now() - INTERVAL 1 MONTH",
+            "rawSql": "SELECT count(DISTINCT o.user_id) as total_customers FROM online_store.orders o WHERE $__timeFilter(o.order_date)",
             "refId": "A"
           }
         ],
@@ -374,9 +372,8 @@
               }
             },
             "pluginVersion": "4.9.0",
-            "query": "SELECT avg(u.user_age) as average_age FROM online_store.orders o JOIN online_store.users u ON o.user_id = u.user_id WHERE o.order_date >= now() - INTERVAL 1 MONTH",
             "queryType": "table",
-            "rawSql": "SELECT avg(u.user_age)::INT as average_age FROM online_store.orders o JOIN online_store.users u ON o.user_id = u.user_id WHERE o.order_date >= now() - INTERVAL 1 MONTH",
+            "rawSql": "SELECT avg(u.user_age)::INT as average_age FROM online_store.orders o JOIN online_store.users u ON o.user_id = u.user_id WHERE $__timeFilter(o.order_date)",
             "refId": "A"
           }
         ],
@@ -479,9 +476,8 @@
               }
             },
             "pluginVersion": "4.9.0",
-            "query": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity * p.external_price) as seller_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY seller_revenue DESC",
             "queryType": "table",
-            "rawSql": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity * p.external_price) as seller_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY seller_revenue DESC",
+            "rawSql": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity * p.external_price) as seller_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE $__timeFilter(o.order_date) GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY seller_revenue DESC",
             "refId": "A"
           }
         ],
@@ -584,9 +580,8 @@
               }
             },
             "pluginVersion": "4.9.0",
-            "query": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity) as items_sold FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY items_sold DESC",
             "queryType": "table",
-            "rawSql": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity) as items_sold FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY items_sold DESC",
+            "rawSql": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity) as items_sold FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE $__timeFilter(o.order_date) GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY items_sold DESC",
             "refId": "A"
           }
         ],
@@ -671,9 +666,8 @@
               }
             },
             "pluginVersion": "4.9.0",
-            "query": "SELECT concat_ws(' ', u.first_name, u.last_name) as customer_name, avg(order_total) as average_order_value FROM (SELECT o.user_id as user_id, sum(oi.quantity * p.external_price) as order_total FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY o.user_id) as order_totals JOIN online_store.users u ON order_totals.user_id = u.user_id GROUP BY u.user_id, u.first_name, u.last_name ORDER BY average_order_value DESC",
             "queryType": "table",
-            "rawSql": "SELECT concat_ws(' ', u.first_name, u.last_name) as customer_name, avg(order_total) as average_order_value FROM (SELECT o.user_id as user_id, sum(oi.quantity * p.external_price) as order_total FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE o.order_date >= now() - INTERVAL 1 MONTH GROUP BY o.user_id) as order_totals JOIN online_store.users u ON order_totals.user_id = u.user_id GROUP BY u.user_id, u.first_name, u.last_name ORDER BY average_order_value DESC",
+            "rawSql": "SELECT concat_ws(' ', u.first_name, u.last_name) as customer_name, avg(order_total) as average_order_value FROM (SELECT o.user_id as user_id, sum(oi.quantity * p.external_price) as order_total FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE $__timeFilter(o.order_date) GROUP BY o.user_id) as order_totals JOIN online_store.users u ON order_totals.user_id = u.user_id GROUP BY u.user_id, u.first_name, u.last_name ORDER BY average_order_value DESC",
             "refId": "A"
           }
         ],
@@ -682,7 +676,7 @@
       }
     ],
     "preload": false,
-    "refresh": "5m",
+    "refresh": "30s",
     "schemaVersion": 41,
     "tags": [
       "online-store"

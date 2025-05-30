@@ -1,13 +1,13 @@
 services:
   postgres:
     image: postgres:15
-    hostname: postgres
+    hostname: ${DB_HOST}
     environment:
-      POSTGRES_DB: online_store
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - 5432:${DB_PORT}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init/postgres:/docker-entrypoint-initdb.d
@@ -59,6 +59,10 @@ services:
     ports:
       - "8083:8083"
     environment:
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PORT: ${DB_PORT}
       BOOTSTRAP_SERVERS: kafka:29092
       GROUP_ID: 1
       CONFIG_STORAGE_TOPIC: my_connect_configs
@@ -84,39 +88,23 @@ services:
 
   clickhouse:
     image: clickhouse/clickhouse-server:23.8
+    hostname: ${CLICKHOUSE_HOST}
     ports:
-      - "8123:8123"
-      - "9000:9000"
+      - 8123:${CLICKHOUSE_PORT_HTTP}
+      - 9000:${CLICKHOUSE_PORT}
     volumes:
       - clickhouse_data:/var/lib/clickhouse
       - ./init/clickhouse:/docker-entrypoint-initdb.d
     environment:
-      - CLICKHOUSE_DB=online_store
-      - CLICKHOUSE_USER=default
-      - CLICKHOUSE_PASSWORD=default
+      - CLICKHOUSE_DB=${DB_NAME}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
       interval: 30s
       timeout: 10s
       retries: 3
 
-  prometheus:
-    image: prom/prometheus:latest
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus_data:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--storage.tsdb.path=/prometheus'
-      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
-      - '--web.console.templates=/usr/share/prometheus/consoles'
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   grafana:
     image: grafana/grafana:latest
@@ -126,6 +114,11 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
+      - CLICKHOUSE_DB=${DB_NAME}
+      - CLICKHOUSE_HOST=${CLICKHOUSE_HOST}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
+      - CLICKHOUSE_PORT_HTTP=${CLICKHOUSE_PORT_HTTP}
       - GF_SECURITY_ADMIN_USER=admin
       - GF_SECURITY_ADMIN_PASSWORD=admin
       - GF_USERS_ALLOW_SIGN_UP=false
@@ -150,6 +143,9 @@ services:
         condition: service_healthy
     environment:
       - PYTHONUNBUFFERED=1
+      - CLICKHOUSE_DB=${DB_NAME}
+      - CLICKHOUSE_USER=${CLICKHOUSE_USER}
+      - CLICKHOUSE_PASSWORD=${CLICKHOUSE_PASSWORD}
     volumes:
       - ./scripts:/app/
     restart: unless-stopped
@@ -157,6 +153,5 @@ services:
 volumes:
   postgres_data:
   clickhouse_data:
-  prometheus_data:
   grafana_data:
   superset_data: 
