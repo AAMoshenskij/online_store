@@ -32,7 +32,7 @@ graph TB
     subgraph "APP"
         API[FastAPI Application]
         AUTH[Authentication]
-        RATE[Rate Limiting]
+        RATE[Shop]
     end
 
     subgraph "Database"
