@@ -78,7 +78,7 @@ def create_users(session):
                         :is_active, :is_superuser, :role, :date_joined)
                 RETURNING id
             """),
-            {**user_data, "date_joined": datetime.utcnow()}
+            {**user_data, "date_joined": datetime.now()}
         )
         user_ids.append(result.scalar())
     
@@ -98,13 +98,13 @@ def create_sellers(session, user_ids):
                 VALUES (:user_id, :first_name, :last_name, :created_at)
                 RETURNING id
             """),
-            {**seller_data, "created_at": datetime.utcnow()}
+            {**seller_data, "created_at": datetime.now()}
         )
         seller_ids.append(result.scalar())
     
     return seller_ids
 
-def create_product_variants(session, product_id):
+def create_product_variants(session, product_id, base_price):
     # Создаем опции для продукта
     options_data = [
         {"name": "Size", "items": ["S", "M", "L", "XL"]},
@@ -147,11 +147,10 @@ def create_product_variants(session, product_id):
             option_item_ids[option_id].append(result.scalar())
     
     # Создаем варианты продукта
-    base_price = 1000  # Базовая цена
     for size_id in option_item_ids[option_ids[0]]:  # Size
         for color_id in option_item_ids[option_ids[1]]:  # Color
-            # Генерируем случайную цену и количество
-            price = base_price + (size_id * 100) + (color_id * 50)
+            # Используем базовую цену из CSV с небольшими вариациями для разных размеров
+            price = base_price * (1 + (size_id * 0))  # Увеличиваем цену на 10% для каждого размера
             stock = (size_id + color_id) * 10
             
             session.execute(
@@ -171,8 +170,8 @@ def create_product_variants(session, product_id):
                     "stock": stock,
                     "option1": size_id,
                     "option2": color_id,
-                    "created_at": datetime.utcnow(),
-                    "updated_at": datetime.utcnow()
+                    "created_at": datetime.now(),
+                    "updated_at": datetime.now()
                 }
             )
 
@@ -191,9 +190,21 @@ def create_products(session, seller_ids):
                     if pd.isna(value):
                         return None
                     if isinstance(value, str):
-                        # Удаляем все символы кроме цифр и точки
-                        value = ''.join(c for c in value if c.isdigit() or c == '.')
-                    return float(value) if value else None
+                        # Удаляем все символы кроме цифр, точки, запятой и пробела
+                        value = ''.join(c for c in value if c.isdigit() or c in '., ')
+                        # Удаляем пробелы (разделители тысяч)
+                        value = value.replace(' ', '')
+                        # Заменяем запятую на точку для корректного преобразования в float
+                        value = value.replace(',', '.')
+                        # Если после очистки строка пустая, возвращаем None
+                        if not value:
+                            return None
+                        try:
+                            # Пробуем преобразовать в float
+                            return str(float(value))
+                        except ValueError:
+                            return None
+                    return str(value) if value else None
 
                 # Создаем продукт
                 result = session.execute(
@@ -220,11 +231,11 @@ def create_products(session, seller_ids):
                         "image": row['image'],
                         "link": row['link'],
                         "ratings": clean_number(row['ratings']),
-                        "no_of_ratings": int(clean_number(row['no_of_ratings'])) if clean_number(row['no_of_ratings']) else None,
+                        "no_of_ratings": int(float(clean_number(row['no_of_ratings']) or 0)),
                         "discount_price": clean_number(row['discount_price']),
                         "actual_price": clean_number(row['actual_price']),
-                        "created_at": datetime.utcnow(),
-                        "published_at": datetime.utcnow(),
+                        "created_at": datetime.now(),
+                        "published_at": datetime.now(),
                         "seller_id": seller_ids[0] if len(product_ids) % 2 == 0 else seller_ids[1]
                     }
                 )
@@ -242,12 +253,12 @@ def create_products(session, seller_ids):
                         "alt": row['name'],
                         "src": row['image'],
                         "type": "image",
-                        "created_at": datetime.utcnow()
+                        "created_at": datetime.now()
                     }
                 )
                 
                 # Создаем варианты продукта
-                create_product_variants(session, product_id)
+                create_product_variants(session, product_id, float(clean_number(row['actual_price']) or 0))
     
     return product_ids
 

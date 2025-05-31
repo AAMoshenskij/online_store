@@ -311,15 +311,21 @@ class ETLProcessor:
                     if msg.error():
                         if msg.error().code() == KafkaError._PARTITION_EOF:
                             logger.debug(f"Reached end of partition for topic {msg.topic()}")
+                            # Коммитим офсет даже для EOF
+                            self.consumer.commit(msg)
                             continue
                         else:
                             logger.error(f"Kafka error: {msg.error()}")
+                            # Коммитим офсет даже при ошибке
+                            self.consumer.commit(msg)
                             continue
 
                     try:
                         # Проверяем, не обрабатывали ли мы уже это сообщение
                         if self._is_message_processed(msg.topic(), msg.partition(), msg.offset()):
                             logger.info(f"Skipping already processed message: topic={msg.topic()}, partition={msg.partition()}, offset={msg.offset()}")
+                            # Коммитим офсет для уже обработанных сообщений
+                            self.consumer.commit(msg)
                             continue
 
                         logger.info(f"Processing new message from topic {msg.topic()}, partition {msg.partition()}, offset {msg.offset()}")
@@ -328,12 +334,17 @@ class ETLProcessor:
                         # Отмечаем сообщение как обработанное
                         self._mark_message_processed(msg.topic(), msg.partition(), msg.offset())
                         
+                        # Коммитим офсет после успешной обработки
+                        self.consumer.commit(msg)
+                        
                     except Exception as e:
                         logger.error(f"Failed to process message: {str(e)}")
+                        # Коммитим офсет даже при ошибке обработки
+                        self.consumer.commit(msg)
                         continue
                 
-                # Коммитим все обработанные сообщения
-                self.consumer.commit()
+                # Убираем общий коммит, так как теперь коммитим каждое сообщение индивидуально
+                # self.consumer.commit()
 
         except KeyboardInterrupt:
             logger.info("Stopping ETL processor...")

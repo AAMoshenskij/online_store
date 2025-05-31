@@ -14,24 +14,6 @@ class OrderService:
             # Проверка наличия товаров
             for item in items:
                 variant = session.get(ProductVariant, item.variant_id)
-                product = session.get(Product, variant.product_id)
-                seller = session.get(Seller, product.seller_id)
-                if not variant or variant.stock < item.quantity:
-                    raise HTTPException(
-                        status_code=status.HTTP_400_BAD_REQUEST,
-                        detail=f"Недостаточно товара {item.variant_id}"
-                    )
-            
-            # Создание заказа
-            order = Order(user_id=user_id, status="created", total_amount=0)
-            session.add(order)
-            session.flush()
-            
-            # Добавление товаров
-            total = 0
-            for item in items:
-                variant = session.get(ProductVariant, item.variant_id)
-
                 if not variant:
                     raise HTTPException(
                         status_code=status.HTTP_400_BAD_REQUEST,
@@ -49,6 +31,23 @@ class OrderService:
                         status_code=status.HTTP_400_BAD_REQUEST,
                         detail=f"Seller {product.seller_id} not found"
                     )
+                if variant.stock < item.quantity:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"Недостаточно товара {item.variant_id}"
+                    )
+            
+            # Создание заказа
+            order = Order(user_id=user_id, status="created", total_amount=0)
+            session.add(order)
+            session.flush()
+            
+            # Добавление товаров
+            total = 0
+            for item in items:
+                variant = session.get(ProductVariant, item.variant_id)
+                product = session.get(Product, variant.product_id)
+                seller = session.get(Seller, product.seller_id)
                 
                 order_item = OrderItem(
                     order_id=order.id,
