@@ -1,6 +1,53 @@
-pandas==2.1.0
-psycopg2-binary==2.9.9
-python-dotenv==1.0.0
-confluent-kafka==2.3.0
-clickhouse-driver==0.2.6
-python-dateutil==2.8.2 
+# Основные зависимости
+fastapi~=0.103.2
+uvicorn~=0.23.2
+sqlalchemy~=2.0.21
+alembic~=1.12.0
+psycopg2-binary~=2.9.9
+python-dotenv~=1.0.0
+
+# Аутентификация и безопасность
+bcrypt~=4.0.1
+python-jose~=3.3.0
+passlib~=1.7.4
+PyJWT~=2.9.0
+pyotp~=2.9.0
+cryptography~=41.0.4
+
+# Поиск и индексация
+elasticsearch~=8.8.1
+
+# Обработка данных
+pandas~=2.1.0
+python-dateutil~=2.8.2
+
+# Kafka и стриминг
+confluent-kafka~=2.3.0
+
+# ClickHouse
+clickhouse-driver~=0.2.6
+
+# HTTP и API
+aiohttp~=3.10.11
+httpx~=0.25.0
+requests~=2.31.0
+starlette~=0.27.0
+
+# Валидация и типы
+pydantic~=2.4.2
+pydantic_core~=2.10.1
+email-validator~=2.0.0.post2
+annotated-types~=0.5.0
+
+# Тестирование
+pytest~=7.4.2
+pytest-asyncio~=0.21.1
+pytest-is-running~=1.5.0
+Faker~=19.6.2
+
+# Утилиты
+Pillow~=10.0.1
+PyYAML~=6.0.1
+python-multipart~=0.0.6
+watchfiles~=0.20.0
+websockets~=11.0.3

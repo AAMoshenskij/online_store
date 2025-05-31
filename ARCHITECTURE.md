@@ -1,51 +1,41 @@
-# Архитектура онлайн-магазина
+# Архитектура приложения и поиска
 
 ## Компоненты системы
 
-### 1. Источники данных
+### 1. API и приложение
 
-- **PostgreSQL**: Хранение реляционных данных
-  - Пользователи (users)
-  - Продукты (products)
-  - Продавцы (sellers)
-  - Заказы (orders)
-  - Элементы заказов (order_items)
+- **FastAPI**: Основное приложение
+  - REST API для работы с продуктами
+  - Аутентификация и авторизация
+  - Управление заказами
+  - Интеграция с Elasticsearch
 
-### 2. Сбор данных (CDC)
+### 2. Поиск и индексация
 
-- **Debezium**: Отслеживание изменений в PostgreSQL
-  - Конфигурация через postgres-connector.json
-  - Настройка фильтрации таблиц и схем
-  - Поддержка снэпшотов и инкрементальных изменений
+- **Elasticsearch**: Поисковый движок
+  - Индексация продуктов
+  - Полнотекстовый поиск
+  - Фильтрация и агрегации
+  - Автодополнение и подсказки
 
-- **Kafka**: Промежуточное хранение потоковых данных
-  - Топики для каждой таблицы
-  - Настройка репликации и партиционирования
-  - Мониторинг через JMX
+### 3. База данных
 
-### 3. Обработка данных
+- **PostgreSQL**: Основное хранилище данных
+  - Продукты и их варианты
+  - Пользователи и продавцы
+  - Заказы и транзакции
 
-- **ETL Processor**: Python-сервис для обработки потоковых данных
-  - Чтение данных из Kafka
-  - Трансформация и обогащение данных
-  - Запись в ClickHouse
-
-### 4. Хранение и аналитика
-
-- **ClickHouse**: Хранение и анализ данных
-  - Оптимизированная структура таблиц
-  - Эффективные агрегации
-
-- **Grafana**: Визуализация данных
-  - Дашборды для анализа продаж
-  - Мониторинг ключевых метрик
-  - Настраиваемые временные интервалы
-
-## Диаграмма ETL-pipeline
+## Диаграмма архитектуры
 
 ```mermaid
 graph TB
-    subgraph "Data Source"
+    subgraph "APP"
+        API[FastAPI Application]
+        AUTH[Authentication]
+        RATE[Rate Limiting]
+    end
+
+    subgraph "Database"
         PG[(PostgreSQL)]
     end
 
@@ -54,8 +44,12 @@ graph TB
         KAFKA[Kafka]
     end
 
-    subgraph "Processing"
-        ETL[ETL Processor]
+    subgraph "ETL Processing"
+        ETL_CH[ETL for ClickHouse]
+    end
+
+    subgraph "Search"
+        ES[(Elasticsearch)]
     end
 
     subgraph "Analytics"
@@ -63,42 +57,99 @@ graph TB
         GRAF[Grafana]
     end
 
-    
+    %% Styling
+    classDef app fill:#bbf,stroke:#333,stroke-width:2px
+    classDef database fill:#fbb,stroke:#333,stroke-width:2px
+    classDef cdc fill:#ffb,stroke:#333,stroke-width:2px
+    classDef etl fill:#f9f,stroke:#333,stroke-width:2px
+    classDef search fill:#bfb,stroke:#333,stroke-width:2px
+    classDef analytics fill:#fbf,stroke:#333,stroke-width:2px
 
+    %% App connections
+    API --> AUTH
+    API --> RATE
+    AUTH --> PG
+    API --> PG
+    API --> ES
+    PG --> ES
+
+    %% CDC connections
     PG --> DEB
     DEB --> KAFKA
-    KAFKA --> ETL
-    ETL --> CH
-    CH --> GRAF
 
-    
+    %% ETL connections
+    KAFKA --> ETL_CH
+    ETL_CH --> CH
+
+    %% Analytics connections
+    CH --> GRAF
+    class API,AUTH,RATE app
+    class PG database
+    class DEB,KAFKA cdc
+    class ETL_CH etl
+    class ES search
+    class CH,GRAF analytics
+
 ```
 
 ## Особенности реализации
 
-1. **Масштабируемость**:
-   - Горизонтальное масштабирование Kafka
-   - Распределенная обработка в ETL
-   - Оптимизированные запросы в ClickHouse
+### 1. Поисковая система
 
-2. **Отказоустойчивость**:
-   - Репликация данных в Kafka
-   - Механизмы восстановления в Debezium
-   - Мониторинг состояния компонентов
+- **Индексация продуктов**:
+  - CDC через Debezium → Kafka
+  - ETL-процессор читает данные из Kafka и индексирует в Elasticsearch
+  - Автоматическая индексация при изменениях в PostgreSQL
+  - Периодическая полная переиндексация
+  - Инкрементальное обновление индекса
 
-3. **Производительность**:
-   - Эффективная обработка потоковых данных
-   - Оптимизированные запросы в ClickHouse
-   - Кэширование в Grafana
+- **Поисковые возможности**:
+  - Полнотекстовый поиск по названию и описанию
+  - Фильтрация по категориям и атрибутам
+  - Сортировка по релевантности и цене
+  - Автодополнение и подсказки
 
-4. **Безопасность**:
-   - Защита паролей в конфигурации
-   - Контроль доступа к данным
-   - Безопасное хранение конфигураций
+### 2. API и приложение
+
+- **REST API**:
+  - CRUD операции для продуктов
+  - Управление заказами
+  - Аутентификация и авторизация
+  - Rate limiting и кэширование
+
+- **Интеграции**:
+  - Чтение из Elasticsearch
+  - Отправка событий в Kafka
+  - Мониторинг и логирование
+
+### 3. Масштабирование
+
+- **Горизонтальное масштабирование**:
+  - Несколько инстансов FastAPI
+  - Кластер Elasticsearch
+  - Репликация PostgreSQL
+  - Множество партиций в Kafka
+  - Несколько ETL-процессоров
+
+- **Оптимизация производительности**:
+  - Кэширование в Redis
+  - Асинхронная обработка
+  - Оптимизированные запросы
 
 ## Потоки данных
 
-1. **Потоковый режим**:
-   - PostgreSQL → Debezium → Kafka → ETL Processor → ClickHouse
-   - Непрерывная обработка в реальном времени
-   - Визуализация в Grafana
+1. **Создание/обновление продукта**:
+   - FastAPI → PostgreSQL
+   - PostgreSQL → Debezium → Kafka
+   - Kafka → ETL-процессор → Elasticsearch
+   - Kafka → ETL-процессор → ClickHouse
+
+2. **Поиск продуктов**:
+   - FastAPI → Elasticsearch
+   - Кэширование результатов
+   - Агрегация и фильтрация
+
+3. **Аналитика**:
+   - События → Kafka → ETL-процессор → ClickHouse
+   - ClickHouse → Grafana
+   - Мониторинг и метрики 

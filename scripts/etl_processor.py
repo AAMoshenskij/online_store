@@ -81,7 +81,9 @@ TABLE_MAPPINGS = {
             'external_price': 'external_price'
         },
         'transformations': {
-            'external_price': lambda x: Decimal(re.sub(r'[^\d.]', '', x)) if x else Decimal('0')
+            'external_price': lambda x: Decimal(re.sub(r'[^\d.]', '', x)) if x else Decimal('0'),
+            'external_ratings': lambda x: float(x) if x else 0.0,
+            'external_ratings_count': lambda x: int(x) if x else 0
         }
     },
     'order_items': {
@@ -102,6 +104,10 @@ TABLE_MAPPINGS = {
             'status': 'status',
             'payment_method': 'payment_method',
             'created_at': 'created_at'
+        },
+        'transformations': {
+            'amount': lambda x: Decimal(re.sub(r'[^\d.]', '', str(x))) if x else Decimal('0'),
+            'currency': lambda x: str(x).strip().upper() if x else 'USD'
         }
     },
     'orders': {
@@ -111,6 +117,9 @@ TABLE_MAPPINGS = {
             'user_id': 'user_id',
             'status': 'status',
             'created_at': 'order_date'
+        },
+        'transformations': {
+            'created_at': lambda x: datetime.fromisoformat(x.replace('Z', '+00:00')).date() if x else None
         }
     }
 }
@@ -126,6 +135,8 @@ class ETLProcessor:
             raise
         self.clickhouse_client = clickhouse_driver.Client(**CLICKHOUSE_CONFIG)
         self.topic_pattern = re.compile(r'postgres\.public\.(\w+)')
+        self.expected_topics = [f'postgres.public.{table}' for table in TABLE_MAPPINGS.keys()]
+        self.subscribed_topics = set()
         
         # Создаем таблицу для отслеживания прочитанных сообщений
         self._create_processed_messages_table()
@@ -185,7 +196,6 @@ class ETLProcessor:
         try:
             # Parse message
             value = json.loads(msg.value().decode('utf-8'))
-            payload = value.get('payload', {})
             
             # Extract table name from topic
             topic = msg.topic()
@@ -261,46 +271,69 @@ class ETLProcessor:
             logger.error(f"Failed to insert data into {table}: {str(e)}")
             raise
 
-    def run(self):
-        # Subscribe to all relevant topics
-        topics = [f'postgres.public.{table}' for table in TABLE_MAPPINGS.keys()]
-        self.consumer.subscribe(topics)
-        logger.info(f"Subscribed to topics: {topics}")
+    def _check_new_topics(self):
+        """Проверяет наличие новых топиков и подписывается на них"""
+        try:
+            admin_client = AdminClient({'bootstrap.servers': KAFKA_CONFIG['bootstrap.servers']})
+            metadata = admin_client.list_topics(timeout=10)
+            existing_topics = set(metadata.topics.keys())
+            
+            # Находим новые топики, на которые еще не подписаны
+            new_topics = set(self.expected_topics) & existing_topics - self.subscribed_topics
+            
+            if new_topics:
+                logger.info(f"Found new topics: {new_topics}")
+                # Подписываемся на новые топики
+                self.consumer.subscribe(list(new_topics))
+                self.subscribed_topics.update(new_topics)
+                logger.info(f"Subscribed to new topics. Current subscriptions: {self.subscribed_topics}")
+            
+            return len(new_topics) > 0
+        except Exception as e:
+            logger.error(f"Error checking for new topics: {str(e)}")
+            return False
 
+    def run(self):
+        logger.info(f"Starting ETL processor. Expected topics: {self.expected_topics}")
+        
         try:
             while True:
-                msg = self.consumer.poll(timeout=1.0)
-                if msg is None:
-                    logger.debug("No message received within timeout")
+                # Проверяем новые топики каждые 5 секунд
+                self._check_new_topics()
+                
+                # Получаем все доступные сообщения
+                messages = self.consumer.consume(num_messages=100, timeout=1.0)
+                
+                if not messages:
                     continue
-                if msg.error():
-                    if msg.error().code() == KafkaError._PARTITION_EOF:
-                        logger.debug(f"Reached end of partition for topic {msg.topic()}")
-                        continue
-                    else:
-                        logger.error(f"Kafka error: {msg.error()}")
-                        break
+                
+                for msg in messages:
+                    if msg.error():
+                        if msg.error().code() == KafkaError._PARTITION_EOF:
+                            logger.debug(f"Reached end of partition for topic {msg.topic()}")
+                            continue
+                        else:
+                            logger.error(f"Kafka error: {msg.error()}")
+                            continue
 
-                try:
-                    # Проверяем, не обрабатывали ли мы уже это сообщение
-                    if self._is_message_processed(msg.topic(), msg.partition(), msg.offset()):
-                        logger.info(f"Skipping already processed message: topic={msg.topic()}, partition={msg.partition()}, offset={msg.offset()}")
-                        self.consumer.commit(msg)
-                        continue
+                    try:
+                        # Проверяем, не обрабатывали ли мы уже это сообщение
+                        if self._is_message_processed(msg.topic(), msg.partition(), msg.offset()):
+                            logger.info(f"Skipping already processed message: topic={msg.topic()}, partition={msg.partition()}, offset={msg.offset()}")
+                            continue
 
-                    logger.info(f"Processing new message from topic {msg.topic()}, partition {msg.partition()}, offset {msg.offset()}")
-                    self.process_message(msg)
-                    
-                    # Отмечаем сообщение как обработанное
-                    self._mark_message_processed(msg.topic(), msg.partition(), msg.offset())
-                    
-                    # Коммитим offset только после успешной обработки сообщения
-                    self.consumer.commit(msg)
-                    logger.info(f"Committed offset for topic {msg.topic()}, partition {msg.partition()}, offset {msg.offset()}")
-                except Exception as e:
-                    logger.error(f"Failed to process message: {str(e)}")
-                    # В случае ошибки не коммитим offset, чтобы попробовать обработать сообщение позже
-                    continue
+                        logger.info(f"Processing new message from topic {msg.topic()}, partition {msg.partition()}, offset {msg.offset()}")
+                        self.process_message(msg)
+                        
+                        # Отмечаем сообщение как обработанное
+                        self._mark_message_processed(msg.topic(), msg.partition(), msg.offset())
+                        
+                    except Exception as e:
+                        logger.error(f"Failed to process message: {str(e)}")
+                        continue
+                
+                # Коммитим все обработанные сообщения
+                self.consumer.commit()
 
         except KeyboardInterrupt:
             logger.info("Stopping ETL processor...")
@@ -309,33 +342,5 @@ class ETLProcessor:
             self.clickhouse_client.disconnect()
 
 if __name__ == "__main__":
-    # Wait for Kafka to be ready
-    logger.info("Waiting for Kafka to be ready...")
-    
-    def wait_for_topics():
-        admin_client = AdminClient({'bootstrap.servers': KAFKA_CONFIG['bootstrap.servers']})
-        expected_topics = [f'postgres.public.{table}' for table in TABLE_MAPPINGS.keys()]
-        
-        while True:
-            try:
-                # Get list of topics
-                metadata = admin_client.list_topics(timeout=10)
-                existing_topics = set(metadata.topics.keys())
-                
-                # Check if all expected topics exist
-                missing_topics = set(expected_topics) - existing_topics
-                if not missing_topics:
-                    logger.info("All required topics are available!")
-                    return True
-                
-                logger.info(f"Waiting for topics to be created. Missing topics: {missing_topics}")
-                time.sleep(5)
-            except Exception as e:
-                logger.error(f"Error checking topics: {str(e)}")
-                time.sleep(5)
-    
-    # Wait for topics to be created
-    wait_for_topics()
-    
     processor = ETLProcessor()
     processor.run() 

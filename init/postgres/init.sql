@@ -24,7 +24,7 @@ CREATE TABLE users (
 -- Create users_verifications table
 CREATE TABLE users_verifications (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER UNIQUE REFERENCES users(id),
     request_type VARCHAR,
     new_email VARCHAR(256),
     new_phone VARCHAR(256),
@@ -38,7 +38,7 @@ CREATE TABLE sellers (
     id SERIAL PRIMARY KEY,
     first_name VARCHAR(256),
     last_name VARCHAR(256),
-    user_id INTEGER UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER UNIQUE REFERENCES users(id),
     product_ids INTEGER[] DEFAULT ARRAY[]::INTEGER[],
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -57,26 +57,26 @@ CREATE TABLE user_activities (
 CREATE TABLE products (
     id SERIAL PRIMARY KEY,
     product_name VARCHAR(255) NOT NULL,
-    description TEXT,
-    status VARCHAR DEFAULT 'draft',
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE,
-    published_at TIMESTAMP WITH TIME ZONE,
-    seller_id INTEGER NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
+    description TEXT DEFAULT 'empty',
+    status TEXT DEFAULT 'draft',
     main_category VARCHAR(100),
     sub_category VARCHAR(200),
-    external_link VARCHAR(500),
     external_image_url VARCHAR(500),
+    external_link VARCHAR(500),
     external_ratings FLOAT,
     external_ratings_count INTEGER,
+    external_discount_price VARCHAR(50),
     external_price VARCHAR(50),
-    external_discount_price VARCHAR(50)
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    published_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    seller_id INTEGER NOT NULL REFERENCES sellers(id)
 );
 
 -- Create product_options table
 CREATE TABLE product_options (
     id SERIAL PRIMARY KEY,
-    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
     option_name VARCHAR(255) NOT NULL,
     UNIQUE (product_id, option_name)
 );
@@ -84,7 +84,7 @@ CREATE TABLE product_options (
 -- Create product_option_items table
 CREATE TABLE product_option_items (
     id SERIAL PRIMARY KEY,
-    option_id INTEGER NOT NULL REFERENCES product_options(id) ON DELETE CASCADE,
+    option_id INTEGER NOT NULL REFERENCES product_options(id),
     item_name VARCHAR(255) NOT NULL,
     UNIQUE (option_id, item_name)
 );
@@ -92,7 +92,7 @@ CREATE TABLE product_option_items (
 -- Create product_variants table
 CREATE TABLE product_variants (
     id SERIAL PRIMARY KEY,
-    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
     price NUMERIC(12, 2) DEFAULT 0,
     stock INTEGER DEFAULT 0,
     option1 INTEGER REFERENCES product_option_items(id) ON DELETE SET NULL,
@@ -105,7 +105,7 @@ CREATE TABLE product_variants (
 -- Create product_media table
 CREATE TABLE product_media (
     id SERIAL PRIMARY KEY,
-    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    product_id INTEGER NOT NULL REFERENCES products(id),
     alt VARCHAR,
     src TEXT NOT NULL,
     type VARCHAR NOT NULL,
@@ -116,7 +116,7 @@ CREATE TABLE product_media (
 -- Create orders table
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(id),
     status VARCHAR(20) DEFAULT 'created',
     total_amount NUMERIC(10, 2) NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -126,10 +126,10 @@ CREATE TABLE orders (
 -- Create order_items table
 CREATE TABLE order_items (
     id SERIAL PRIMARY KEY,
-    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
-    product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    order_id INTEGER NOT NULL REFERENCES orders(id),
+    product_id INTEGER NOT NULL REFERENCES products(id),
     variant_id INTEGER REFERENCES product_variants(id) ON DELETE SET NULL,
-    seller_id INTEGER NOT NULL REFERENCES sellers(id) ON DELETE CASCADE,
+    seller_id INTEGER NOT NULL REFERENCES sellers(id),
     quantity INTEGER NOT NULL,
     price NUMERIC(10, 2) NOT NULL
 );
@@ -137,7 +137,7 @@ CREATE TABLE order_items (
 -- Create payments table
 CREATE TABLE payments (
     id SERIAL PRIMARY KEY,
-    order_id INTEGER NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    order_id INTEGER NOT NULL REFERENCES orders(id),
     amount NUMERIC(10, 2) NOT NULL,
     currency VARCHAR(3) DEFAULT 'USD',
     status VARCHAR(20) DEFAULT 'pending',
