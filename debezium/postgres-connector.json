@@ -1,0 +1,23 @@
+{
+    "name": "postgres-connector",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "tasks.max": "1",
+        "database.hostname": "${DB_HOST}",
+        "database.port": "${DB_PORT}",
+        "database.user": "${DB_USER}",
+        "database.password": "${DB_PASSWORD}",
+        "database.dbname": "${DB_NAME}",
+        "database.server.name": "postgres",
+        "topic.prefix": "postgres",
+        "table.include.list": "public.users,public.sellers,public.products,public.product_variants,public.orders,public.order_items,public.payments",
+        "plugin.name": "pgoutput",
+        "tombstones.on.delete": "false",
+        "database.history.kafka.bootstrap.servers": "kafka:29092",
+        "database.history.kafka.topic": "schema-changes.postgres",
+        "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "key.converter.schemas.enable": "false",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "value.converter.schemas.enable": "false"
+    }
+} 

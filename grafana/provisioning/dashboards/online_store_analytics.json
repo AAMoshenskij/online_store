@@ -1,0 +1,807 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 3,
+    "links": [],
+    "panels": [
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 0
+        },
+        "id": 1,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "queryType": "table",
+            "rawSql": "SELECT toStartOfDay(o.order_date) as time, sum(oi.quantity * p.external_price) as daily_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE $__timeFilter(o.order_date) GROUP BY time ORDER BY time",
+            "refId": "A"
+          }
+        ],
+        "title": "Daily Revenue",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 10000
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 0
+        },
+        "id": 2,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.9.0",
+            "queryType": "table",
+            "rawSql": "SELECT p.main_category, sum(oi.quantity * p.external_price) as category_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id WHERE $__timeFilter(o.order_date) GROUP BY p.main_category",
+            "refId": "A"
+          }
+        ],
+        "title": "Revenue by Category",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "id": 3,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "queryType": "table",
+            "rawSql": "SELECT toStartOfDay(o.order_date) as time, count(DISTINCT o.user_id) as total_customers FROM online_store.orders o WHERE $__timeFilter(o.order_date) GROUP BY time ORDER BY time",
+            "refId": "A"
+          }
+        ],
+        "title": "Daily Active Customers",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "id": 4,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "queryType": "table",
+            "rawSql": "SELECT toStartOfDay(u.last_login) as time, avg(u.user_age) as average_age FROM online_store.users u WHERE $__timeFilter(u.last_login) GROUP BY time ORDER BY time",
+            "refId": "A"
+          }
+        ],
+        "title": "Daily Average Customer Age",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 10000
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 16
+        },
+        "id": 5,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.9.0",
+            "queryType": "table",
+            "rawSql": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity * p.external_price) as seller_revenue FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE $__timeFilter(o.order_date) GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY seller_revenue DESC",
+            "refId": "A"
+          }
+        ],
+        "title": "Revenue by Seller",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "thresholds"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "fillOpacity": 80,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "lineWidth": 1,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                },
+                {
+                  "color": "red",
+                  "value": 1000
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 16
+        },
+        "id": 6,
+        "options": {
+          "barRadius": 0,
+          "barWidth": 0.97,
+          "fullHighlight": false,
+          "groupWidth": 0.7,
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "orientation": "auto",
+          "showValue": "auto",
+          "stacking": "none",
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          },
+          "xTickLabelRotation": 0,
+          "xTickLabelSpacing": 0
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "editorType": "sql",
+            "format": 1,
+            "meta": {
+              "builderOptions": {
+                "columns": [],
+                "database": "",
+                "limit": 1000,
+                "mode": "list",
+                "queryType": "table",
+                "table": ""
+              }
+            },
+            "pluginVersion": "4.9.0",
+            "queryType": "table",
+            "rawSql": "SELECT concat_ws(' ', s.first_name, s.last_name) as seller_name, sum(oi.quantity) as items_sold FROM online_store.orders o JOIN online_store.order_items oi ON o.order_id = oi.order_id JOIN online_store.products p ON oi.product_id = p.product_id JOIN online_store.sellers s ON oi.seller_id = s.seller_id WHERE $__timeFilter(o.order_date) GROUP BY s.seller_id, s.first_name, s.last_name ORDER BY items_sold DESC",
+            "refId": "A"
+          }
+        ],
+        "title": "Items Sold by Seller",
+        "type": "barchart"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            },
+            "unit": "currencyUSD"
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 0,
+          "y": 32
+        },
+        "id": 8,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "queryType": "table",
+            "rawSql": "SELECT toStartOfDay(order_date) as time, count() as total_orders FROM online_store.orders WHERE $__timeFilter(order_date) GROUP BY time ORDER BY time",
+            "refId": "A"
+          }
+        ],
+        "title": "Daily Orders",
+        "type": "timeseries"
+      },
+      {
+        "datasource": {
+          "type": "grafana-clickhouse-datasource",
+          "uid": "PDEE91DDB90597936"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "custom": {
+              "axisBorderShow": false,
+              "axisCenteredZero": false,
+              "axisColorMode": "text",
+              "axisLabel": "",
+              "axisPlacement": "auto",
+              "barAlignment": 0,
+              "barWidthFactor": 0.6,
+              "drawStyle": "line",
+              "fillOpacity": 10,
+              "gradientMode": "none",
+              "hideFrom": {
+                "legend": false,
+                "tooltip": false,
+                "viz": false
+              },
+              "insertNulls": false,
+              "lineInterpolation": "linear",
+              "lineWidth": 1,
+              "pointSize": 5,
+              "scaleDistribution": {
+                "type": "linear"
+              },
+              "showPoints": "never",
+              "spanNulls": false,
+              "stacking": {
+                "group": "A",
+                "mode": "none"
+              },
+              "thresholdsStyle": {
+                "mode": "off"
+              }
+            },
+            "mappings": [],
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                {
+                  "color": "green"
+                }
+              ]
+            }
+          },
+          "overrides": []
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 12,
+          "x": 12,
+          "y": 32
+        },
+        "id": 9,
+        "options": {
+          "legend": {
+            "calcs": [],
+            "displayMode": "list",
+            "placement": "bottom",
+            "showLegend": true
+          },
+          "tooltip": {
+            "hideZeros": false,
+            "mode": "single",
+            "sort": "none"
+          }
+        },
+        "pluginVersion": "12.0.0",
+        "targets": [
+          {
+            "datasource": {
+              "type": "grafana-clickhouse-datasource",
+              "uid": "clickhouse"
+            },
+            "queryType": "table",
+            "rawSql": "SELECT toStartOfDay(date_joined) as time, count() as new_users FROM online_store.users WHERE $__timeFilter(date_joined) GROUP BY time ORDER BY time",
+            "refId": "A"
+          }
+        ],
+        "title": "Daily New Users",
+        "type": "timeseries"
+      }
+    ],
+    "preload": false,
+    "refresh": "30s",
+    "schemaVersion": 41,
+    "tags": [
+      "online-store"
+    ],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-1M",
+      "to": "now"
+    },
+    "timepicker": {},
+    "timezone": "",
+    "title": "Online Store Analytics",
+    "uid": "online-store",
+    "version": 3
+  }
