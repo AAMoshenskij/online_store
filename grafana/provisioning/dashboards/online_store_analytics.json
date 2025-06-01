@@ -389,7 +389,7 @@
               "uid": "clickhouse"
             },
             "queryType": "table",
-            "rawSql": "SELECT toStartOfDay(o.order_date) as time, avg(u.user_age)::INT as average_age FROM online_store.orders o JOIN online_store.users u ON o.user_id = u.user_id WHERE $__timeFilter(o.order_date) GROUP BY time ORDER BY time",
+            "rawSql": "SELECT toStartOfDay(u.last_login) as time, avg(u.user_age) as average_age FROM online_store.users u WHERE $__timeFilter(u.last_login) GROUP BY time ORDER BY time",
             "refId": "A"
           }
         ],
